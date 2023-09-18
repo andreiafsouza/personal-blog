@@ -7,8 +7,9 @@ import ProfilePic from "./components/ProfilePic";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Andreia's Blog",
-  description: "Created by Andreia Souza",
+  title: "Postfolio Blog",
+  description:
+    "Embark on a Web Dev Journey: From Front-End to Full Stack. Explore JavaScript, Node.js, React, TypeScript, UI/UX, Scrum, Material UI, and more.",
 };
 
 export default function RootLayout({
