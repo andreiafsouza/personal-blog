@@ -2,6 +2,8 @@ import getFormattedDate from "@/lib/getFormattedDate";
 import { getSortedPostsData, getPostData } from "@/lib/posts";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import CodeParser from "@/app/components/CodeParser"
+import Markdown from "react-markdown";
 
 export function generateStaticParams() {
   const posts = getSortedPostsData();
@@ -41,10 +43,27 @@ export default async function Post({ params }: { params: { postId: string } }) {
 
   return (
     <main className="p-6 prose prose-xl prose-slate dark:prose-invert mx-auto">
-      <h1 className="text-3xl mt-4 mb-0">{title}</h1>
+      <h1 className="text-2xl mt-4 mb-0">{title}</h1>
       <p className="mt-0">{pubDate}</p>
       <article>
-        <section dangerouslySetInnerHTML={{ __html: contentHtml }} />
+        <Markdown
+          className={"text-base"}
+          children={contentHtml}
+          components={{
+            code(props) {
+              const { children, className, node, ...rest } = props;
+              const match = /language-(\w+)/.exec(className || "");
+              return match ? (
+                <CodeParser codeString={String(children).replace(/\n$/, "")} />
+              ) : (
+                <code {...rest} className={className}>
+                  {children}
+                </code>
+              );
+            },
+          }}
+        />
+
         <p>
           <Link href="/">← Back to home</Link>
         </p>
