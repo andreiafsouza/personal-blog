@@ -1,0 +1,9 @@
+# *
+User-agent: *
+Allow: /
+
+# Host
+Host: https://personal-blog-andreiafsouza.vercel.app/
+
+# Sitemaps
+Sitemap: https://personal-blog-andreiafsouza.vercel.app/sitemap.xml

@@ -1,73 +1,74 @@
-import getFormattedDate from "@/lib/getFormattedDate";
-import { getSortedPostsData, getPostData } from "@/lib/posts";
-import { notFound } from "next/navigation";
-import Link from "next/link";
-import CodeParser from "@/app/components/CodeParser"
-import Markdown from "react-markdown";
+import getFormattedDate from "@/lib/getFormattedDate"
+import { getPostsMeta, getPostByName } from "@/lib/posts"
+import { notFound } from "next/navigation"
+import Link from "next/link"
+import 'highlight.js/styles/github-dark.css'
 
-export function generateStaticParams() {
-  const posts = getSortedPostsData();
+export const revalidate = 86400
 
-  return posts.map((post) => ({
-    postId: post.id,
-  }));
+type Props = {
+    params: {
+        postId: string
+    }
 }
 
-export function generateMetadata({ params }: { params: { postId: string } }) {
-  const posts = getSortedPostsData();
-  const { postId } = params;
+export async function generateStaticParams() {
+    const posts = await getPostsMeta() //deduped!
 
-  const post = posts.find((post) => post.id === postId);
+    if (!posts) return []
 
-  if (!post) {
+    return posts.map((post) => ({
+        postId: post.id
+    }))
+}
+
+export async function generateMetadata({ params: { postId } }: Props) {
+
+    const post = await getPostByName(`${postId}.mdx`) //deduped!
+
+    if (!post) {
+        return {
+            title: 'Post Not Found'
+        }
+    }
+
     return {
-      title: "Post Not Found",
-    };
-  }
-
-  return {
-    title: post.title,
-    description: post.description,
-  };
+        title: post.meta.title,
+    }
 }
 
-export default async function Post({ params }: { params: { postId: string } }) {
-  const posts = getSortedPostsData();
-  const { postId } = params;
+export default async function Post({ params: { postId } }: Props) {
 
-  if (!posts.find((post) => post.id === postId)) notFound();
+    const post = await getPostByName(`${postId}.mdx`) //deduped!
 
-  const { title, date, contentHtml } = await getPostData(postId);
+    if (!post) notFound()
 
-  const pubDate = getFormattedDate(date);
+    const { meta, content } = post
 
-  return (
-    <main className="p-6 prose prose-xl prose-slate dark:prose-invert mx-auto">
-      <h1 className="text-2xl mt-4 mb-0">{title}</h1>
-      <p className="mt-0">{pubDate}</p>
-      <article>
-        <Markdown
-          className={"text-base"}
-          children={contentHtml}
-          components={{
-            code(props) {
-              const { children, className, node, ...rest } = props;
-              const match = /language-(\w+)/.exec(className || "");
-              return match ? (
-                <CodeParser codeString={String(children).replace(/\n$/, "")} />
-              ) : (
-                <code {...rest} className={className}>
-                  {children}
-                </code>
-              );
-            },
-          }}
-        />
+    const pubDate = getFormattedDate(meta.date)
 
-        <p>
-          <Link href="/">← Back to home</Link>
-        </p>
-      </article>
-    </main>
-  );
+    const tags = meta.tags.map((tag, i) => (
+        <Link key={i} href={`/tags/${tag}`}>{tag}</Link>
+    ))
+
+    return (
+        <>
+            <h2 className="text-3xl mt-4 mb-0">{meta.title}</h2>
+            <p className="mt-0 text-sm">
+                {pubDate}
+            </p>
+            <article>
+                {content}
+            </article>
+            <section>
+                <h3>Related:</h3>
+                <div className="flex flex-row flex-wrap gap-4">
+                    {tags}
+                </div>
+            </section>
+            <p className="mb-10">
+                <Link href="/">← Back to home</Link>
+            </p>
+        </>
+    )
 }
